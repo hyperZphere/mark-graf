@@ -13,6 +13,33 @@
 
 (require 'cl-lib)
 
+;; Variables defined in mark-graf.el
+(defvar mark-graf-display-images)
+(defvar mark-graf--rendering-enabled)
+(defvar mark-graf--full-render-done-p)
+(defvar mark-graf--code-edit-buffer)
+
+;; Functions defined in mark-graf.el
+(declare-function mark-graf--fenced-code-block-content-at "mark-graf")
+
+;; Functions defined in mark-graf-render.el
+(declare-function mark-graf-render--render-region "mark-graf-render")
+(declare-function mark-graf-render--clear-all "mark-graf-render")
+(declare-function mark-graf-render--unrender-region "mark-graf-render")
+(declare-function mark-graf-render--language-to-mode "mark-graf-render")
+(declare-function mark-graf-render--follow-link "mark-graf-render")
+
+;; Functions defined in mark-graf-ts.el
+(declare-function mark-graf-ts--element-at "mark-graf-ts")
+(declare-function mark-graf-node-start "mark-graf-ts")
+(declare-function mark-graf-node-end "mark-graf-ts")
+
+;; Functions from outline.el (may not be loaded)
+(declare-function outline-toggle-children "outline")
+(declare-function outline-hide-body "outline")
+(declare-function outline-hide-sublevels "outline")
+(declare-function outline-show-all "outline")
+
 ;;; Style Insertion Commands
 
 ;;;###autoload
@@ -404,9 +431,9 @@ Continues the current list type or creates a new unordered list."
       (insert (make-string (+ col-width 2) ?-) "|"))
     (insert "\n")
     ;; Data rows
-    (dotimes (r rows)
+    (dotimes (_r rows)
       (insert "|")
-      (dotimes (c cols)
+      (dotimes (_c cols)
         (insert (format " %-10s |" "")))
       (insert "\n")))
   ;; Position cursor in first data cell
@@ -415,8 +442,8 @@ Continues the current list type or creates a new unordered list."
   (forward-char 1))
 
 ;;;###autoload
-(defun mark-graf-table-sort (&optional column)
-  "Sort table by COLUMN (0-indexed)."
+(defun mark-graf-table-sort (&optional _column)
+  "Sort table by _COLUMN (0-indexed)."
   (interactive
    (list (mark-graf-table-column-at-point)))
   (when-let ((bounds (mark-graf-table-bounds)))

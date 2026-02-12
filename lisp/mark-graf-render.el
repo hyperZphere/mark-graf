@@ -16,6 +16,13 @@
 (require 'url-parse)
 (require 'mark-graf-mermaid)
 
+;; Variables defined in mark-graf.el
+(defvar mark-graf--rendering-enabled)
+(defvar mark-graf-display-images)
+(defvar mark-graf-image-max-width)
+(defvar mark-graf-image-max-height)
+(defvar mark-graf-left-margin)
+
 ;;; Internal Variables
 
 (defvar-local mark-graf-render--overlays nil
@@ -408,12 +415,12 @@ A lightweight overlay is placed on the line to override buffer-local
     (save-excursion
       (goto-char start)
       (when (looking-at "\\[\\([^]]+\\)\\](\\([^)]+\\))")
-        (let ((text (match-string 1))
+        (let ((_text (match-string 1))
               (url (match-string 2))
               (text-start (match-beginning 1))
               (text-end (match-end 1))
-              (url-start (match-beginning 2))
-              (url-end (match-end 2)))
+              (_url-start (match-beginning 2))
+              (_url-end (match-end 2)))
           ;; Hide opening [
           (let ((ov (mark-graf-render--get-overlay start (1+ start))))
             (overlay-put ov 'display "")
@@ -669,9 +676,9 @@ Dispatches to mermaid renderer for mermaid code blocks."
         (let* ((fence-line-end (line-end-position))
                ;; Get language - strip text properties that might interfere with display
                (raw-lang (or language (match-string 3) ""))
-               (lang (if (stringp raw-lang)
-                         (substring-no-properties raw-lang)
-                       ""))
+               (_lang (if (stringp raw-lang)
+                          (substring-no-properties raw-lang)
+                        ""))
                (content-start (1+ fence-line-end))  ; Start of next line
                (content-end (save-excursion
                               (goto-char end)
@@ -886,7 +893,7 @@ Also handles list items inside blockquotes."
   "Render list item element ELEM.
 Includes wrap-prefix for proper line continuation."
   (let ((start (mark-graf-node-start elem))
-        (end (mark-graf-node-end elem))
+        (_end (mark-graf-node-end elem))
         ;; Get the base indentation from the buffer's line-prefix
         (base-indent (or (and (boundp 'mark-graf-left-margin)
                               (make-string mark-graf-left-margin ?\s))
@@ -904,7 +911,7 @@ Includes wrap-prefix for proper line continuation."
                (content-start (match-end 0))
                (checkbox-text (match-string 3))
                (is-checked (string-match-p "[xX]" checkbox-text))
-               (level (/ (length indent) 2))
+               (_level (/ (length indent) 2))
                (eol (line-end-position))
                ;; Wrap prefix: base indent + list indent + space for checkbox alignment
                (wrap-str (concat base-indent indent "   ")))
@@ -1776,8 +1783,8 @@ Set to 1.0 for same size as body text."
   "Render math ELEM using preview-latex if available."
   (if (featurep 'preview)
       ;; preview-latex available
-      (let ((start (mark-graf-node-start elem))
-            (end (mark-graf-node-end elem)))
+      (let ((_start (mark-graf-node-start elem))
+            (_end (mark-graf-node-end elem)))
         ;; Use preview-latex machinery
         (mark-graf-render--math elem))  ; Simplified - full integration would be complex
     ;; Fallback

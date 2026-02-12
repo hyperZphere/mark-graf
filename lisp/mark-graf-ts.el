@@ -346,7 +346,7 @@ Optional START and END limit the range."
   "Get inline elements within range START to END."
   (when mark-graf-ts--inline-parser
     (let ((elements '())
-          (text (buffer-substring-no-properties start end)))
+          (_text (buffer-substring-no-properties start end)))
       ;; Parse the text range for inline elements
       (treesit-parser-set-included-ranges
        mark-graf-ts--inline-parser
@@ -419,7 +419,7 @@ Handles Windows CRLF line endings with \\r?.")
       (while (and (< (point) end)
                   (re-search-forward "^\\([ \t]*\\)\\(```\\|~~~\\)\\([a-zA-Z0-9_+-]*\\)?[ \t]*\r?$" end t))
         (let* ((block-start (match-beginning 0))
-               (indent (match-string 1))      ; Capture the indentation
+               (_indent (match-string 1))     ; Capture the indentation
                (fence-char (match-string 2))  ; "```" or "~~~"
                (lang (match-string 3))
                ;; Build regex requiring SAME fence character for closing

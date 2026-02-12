@@ -7,7 +7,6 @@ mark-graf brings a seamless live preview experience to Emacs, combining inline W
 ## Features
 
 - **Inline WYSIWYG rendering** - Headings, bold, italic, code, links, images rendered in-place
-- **Tree-sitter parsing** - Fast, accurate parsing using Emacs 30's built-in tree-sitter
 - **Three editing paradigms** - Line-at-point, block-at-point, or full hybrid mode
 - **Full GFM support** - Tables, task lists, fenced code blocks, strikethrough
 - **Syntax highlighting** - Code blocks highlighted using native Emacs modes
@@ -21,9 +20,6 @@ mark-graf brings a seamless live preview experience to Emacs, combining inline W
 ## Requirements
 
 - Emacs 30.1 or later
-- tree-sitter-markdown grammar (optional; installed on first use with confirmation)
-
-A regex-based fallback parser is used when tree-sitter is not available.
 
 ### Optional Dependencies
 
@@ -227,7 +223,6 @@ All options available under `M-x customize-group RET mark-graf`:
 |---------|-----------|---------------|----------|
 | Inline WYSIWYG | Yes | No (split pane) | Partial |
 | Pure Emacs | Yes | Yes | Yes |
-| Tree-sitter | Yes | No | No |
 | Dependencies | None | Optional | None |
 | Standard Markdown | Yes | Yes | No (org syntax) |
 | Customizable | Full Elisp | Full Elisp | Full Elisp |

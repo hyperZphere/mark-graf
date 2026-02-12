@@ -135,7 +135,7 @@
     (save-excursion
       (let ((pos (point)))
         (beginning-of-line)
-        (let ((line-start (point))
+        (let ((_line-start (point))
               (cell-start nil)
               (cell-end nil))
           ;; Find cell boundaries

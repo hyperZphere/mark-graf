@@ -655,7 +655,7 @@ BLOCKS is list of plists with :type :label :start :end :sections."
          (msg-gap 44)
          (top-margin 20)
          ;; Participant positions
-         (num-p (length participants))
+         (_num-p (length participants))
          (total-w 0)
          (msg-count (length messages))
          (total-h (+ top-margin box-h 20 (* (1+ msg-count) msg-gap) box-h 20))
@@ -1327,7 +1327,7 @@ COLOR is the stroke color.  Returns list of SVG element strings."
          (fg (plist-get colors :fg))
          (surface (plist-get colors :surface))
          (border (plist-get colors :border))
-         (accent (plist-get colors :accent))
+         (_accent (plist-get colors :accent))
          (font-size 11)
          (line-h 18)
          (pad-x 12)

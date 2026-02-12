@@ -2,11 +2,11 @@
 
 ;; Copyright (C) 2026 mark-graf contributors
 
-;; Author: mark-graf team
+;; Author: Marc Ansset <info@ansset.com>
 ;; Version: 1.0.0
 ;; Package-Requires: ((emacs "30.1"))
 ;; Keywords: markdown, wp, text
-;; URL: https://github.com/mark-graf/mark-graf
+;; URL: https://github.com/hyperZphere/mark-graf
 
 ;; This file is not part of GNU Emacs.
 
@@ -31,7 +31,6 @@
 ;;
 ;; Features:
 ;; - Inline rendering of markdown using text properties and overlays
-;; - Tree-sitter based parsing for accuracy and performance
 ;; - Three editing paradigms: line-at-point, block-at-point, hybrid
 ;; - Full GFM support including tables, task lists, and fenced code blocks
 ;; - Image and diagram rendering
@@ -400,9 +399,6 @@ No background is used to avoid issues with visual-line-mode wrapping."
 (set-face-attribute 'mark-graf-math nil
                     :foreground "#aa5588"
                     :inherit nil)
-
-;; Load verification - remove once bugs are resolved
-(message "mark-graf: loaded BUILD-20260201 (math=delim-hide, hr=40, mermaid=file-svg)")
 
 ;;; Internal Variables
 
@@ -1025,8 +1021,8 @@ special handling ensures the full block is re-rendered correctly."
       ('hybrid
        nil))))
 
-(defun mark-graf--after-change (start end old-len)
-  "Handle buffer modification from START to END with OLD-LEN removed."
+(defun mark-graf--after-change (start end _old-len)
+  "Handle buffer modification from START to END with _OLD-LEN removed."
   (when mark-graf--rendering-enabled
     ;; Mark region as dirty
     (let ((block-bounds (mark-graf-ts--containing-block-bounds start end)))
