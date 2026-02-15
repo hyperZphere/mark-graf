@@ -504,7 +504,6 @@ in when the cursor actually moves to a different line.")
     (define-key map (kbd "C-c <down>") #'mark-graf-move-item-down)
     (define-key map (kbd "C-c <left>") #'mark-graf-promote-item)
     (define-key map (kbd "C-c <right>") #'mark-graf-demote-item)
-    (define-key map (kbd "<f8>") #'mark-graf-toggle-checkbox)
     (define-key map (kbd "C-c C-x C-b") #'mark-graf-toggle-checkbox)
 
     ;; Tables
@@ -621,7 +620,7 @@ in when the cursor actually moves to a different line.")
   "Update text width when window size changes."
   (dolist (win (window-list frame))
     (with-current-buffer (window-buffer win)
-      (when (eq major-mode 'mark-graf-mode)
+      (when (derived-mode-p 'mark-graf-mode)
         (mark-graf--apply-text-width)))))
 
 (defun mark-graf--teardown-buffer ()
@@ -771,7 +770,7 @@ Scans backward and forward from POS looking for consecutive pipe-table lines."
         ;; Scan backward for the start of the table
         (let ((table-start (line-beginning-position)))
           (save-excursion
-            (while (and (> (point) (point-min))
+            (while (and (not (bobp))
                         (progn (forward-line -1)
                                (looking-at "^[ \t]*|.+|[ \t]*$")))
               (setq table-start (line-beginning-position))))

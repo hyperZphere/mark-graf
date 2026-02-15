@@ -4,6 +4,19 @@
 
 ;; This file is part of mark-graf.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;;; Commentary:
 
 ;; Rendering engine for mark-graf.
@@ -16,12 +29,30 @@
 (require 'url-parse)
 (require 'mark-graf-mermaid)
 
+;; Variables defined in mark-graf-ts.el
+(defvar mark-graf-ts--use-tree-sitter)
+
 ;; Variables defined in mark-graf.el
 (defvar mark-graf--rendering-enabled)
 (defvar mark-graf-display-images)
 (defvar mark-graf-image-max-width)
 (defvar mark-graf-image-max-height)
 (defvar mark-graf-left-margin)
+
+;; Variables defined later in this file
+(defvar mark-graf-math-block-scale)
+
+;; Functions defined in mark-graf-ts.el
+(declare-function mark-graf-ts--elements-in-region "mark-graf-ts")
+(declare-function mark-graf-ts--fallback-parse-region "mark-graf-ts")
+(declare-function mark-graf-ts--inline-elements-in "mark-graf-ts")
+(declare-function mark-graf-ts--children "mark-graf-ts")
+(declare-function mark-graf-node-type "mark-graf-ts")
+(declare-function mark-graf-node-start "mark-graf-ts")
+(declare-function mark-graf-node-end "mark-graf-ts")
+(declare-function mark-graf-node-level "mark-graf-ts")
+(declare-function mark-graf-node-language "mark-graf-ts")
+(declare-function mark-graf-node-properties "mark-graf-ts")
 
 ;;; Internal Variables
 
@@ -191,7 +222,7 @@ because tree-sitter cannot find the pipe_table node from a single-line range."
                 (table-end eol))
             ;; Scan backward for table start
             (save-excursion
-              (while (and (> (point) (point-min))
+              (while (and (not (bobp))
                           (progn (forward-line -1)
                                  (save-match-data
                                    (looking-at "^[ \t]*|.+|[ \t]*$"))))
@@ -408,6 +439,14 @@ A lightweight overlay is placed on the line to override buffer-local
 
 ;;; Link and Image Rendering
 
+(defvar mark-graf-render--link-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mouse-1] #'mark-graf-render--follow-link-at-mouse)
+    (define-key map [mouse-2] #'mark-graf-render--follow-link-at-mouse)
+    (define-key map (kbd "RET") #'mark-graf-render--follow-link-at-point)
+    map)
+  "Keymap for link overlays.")
+
 (defun mark-graf-render--link (elem)
   "Render link element ELEM."
   (let ((start (mark-graf-node-start elem))
@@ -438,14 +477,6 @@ A lightweight overlay is placed on the line to override buffer-local
           (let ((ov (mark-graf-render--get-overlay text-end end)))
             (overlay-put ov 'display "")
             (overlay-put ov 'mark-graf-type 'link-delim)))))))
-
-(defvar mark-graf-render--link-keymap
-  (let ((map (make-sparse-keymap)))
-    (define-key map [mouse-1] #'mark-graf-render--follow-link-at-mouse)
-    (define-key map [mouse-2] #'mark-graf-render--follow-link-at-mouse)
-    (define-key map (kbd "RET") #'mark-graf-render--follow-link-at-point)
-    map)
-  "Keymap for link overlays.")
 
 (defun mark-graf-render--follow-link (url)
   "Follow link URL - handle internal anchors vs external URLs."
@@ -1151,7 +1182,7 @@ Always finds the COMPLETE table by scanning beyond element boundaries."
       ;; Find the true start of the table (scan backwards)
       (goto-char start)
       (beginning-of-line)
-      (while (and (> (point) (point-min))
+      (while (and (not (bobp))
                   (save-excursion
                     (forward-line -1)
                     (looking-at "^[ \t]*|.+|[ \t]*$")))

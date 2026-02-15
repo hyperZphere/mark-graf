@@ -4,6 +4,19 @@
 
 ;; This file is part of mark-graf.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;;; Commentary:
 
 ;; Tree-sitter integration layer for mark-graf.
@@ -28,6 +41,11 @@
   treesit-node) ; The underlying treesit node
 
 ;;; Internal Variables
+
+(defvar-local mark-graf-ts--use-tree-sitter nil
+  "Whether tree-sitter is being used for parsing.
+Set to t before loading mark-graf to enable tree-sitter
+\(requires markdown grammar to be installed).")
 
 (defvar-local mark-graf-ts--parser nil
   "Tree-sitter parser for markdown.")
@@ -73,11 +91,6 @@
     (error
      (message "mark-graf: Grammar installation failed (%s), using fallback" (error-message-string err))
      (mark-graf-ts--enable-fallback-mode))))
-
-(defvar-local mark-graf-ts--use-tree-sitter nil
-  "Whether tree-sitter is being used for parsing.
-Set to t before loading mark-graf to enable tree-sitter
-\(requires markdown grammar to be installed).")
 
 (defun mark-graf-ts--enable-fallback-mode ()
   "Enable regex-based parsing fallback when tree-sitter unavailable."

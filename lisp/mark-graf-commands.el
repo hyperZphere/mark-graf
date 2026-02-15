@@ -4,6 +4,19 @@
 
 ;; This file is part of mark-graf.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;;; Commentary:
 
 ;; Interactive commands for mark-graf-mode.
@@ -12,6 +25,20 @@
 ;;; Code:
 
 (require 'cl-lib)
+
+;; Functions defined in other mark-graf files
+(declare-function mark-graf-in-heading-p "mark-graf-elements")
+(declare-function mark-graf-in-table-p "mark-graf-elements")
+(declare-function mark-graf-in-list-p "mark-graf-elements")
+(declare-function mark-graf-table-bounds "mark-graf-elements")
+(declare-function mark-graf-table-column-at-point "mark-graf-elements")
+(declare-function mark-graf-list-item-bounds "mark-graf-elements")
+(declare-function mark-graf-list-marker-at-point "mark-graf-elements")
+(declare-function mark-graf-heading-level-at-point "mark-graf-elements")
+(declare-function mark-graf--at-line-start-p "mark-graf-elements")
+(declare-function mark-graf--ensure-blank-line-before "mark-graf-elements")
+(declare-function mark-graf--toggle-markup "mark-graf-elements")
+(declare-function mark-graf--wrap-region-or-insert "mark-graf-elements")
 
 ;; Variables defined in mark-graf.el
 (defvar mark-graf-display-images)
@@ -673,7 +700,7 @@ revealed lines (by parsing raw markdown syntax at point)."
 (defun mark-graf-edit-code-block ()
   "Edit code block at point in an indirect buffer with the correct major mode.
 Like org-mode's `org-edit-special': opens a narrowed indirect buffer
-with the language's major mode.  Press `C-c \\='` to finish or `C-c C-k' to abort."
+with the language's major mode.  Press \\`C-c \\='\\` to finish or \\`C-c C-k\\` to abort."
   (interactive)
   (when (and (boundp 'mark-graf--code-edit-buffer)
              mark-graf--code-edit-buffer
@@ -784,7 +811,7 @@ Re-renders the code block region."
     (kill-buffer edit-buf)))
 
 (defun mark-graf-code-edit--on-kill ()
-  "Handle external kill of code edit buffer (e.g., C-x k).
+  "Handle external kill of code edit buffer (e.g., \\`C-x k\\`).
 Cleans up source buffer state and re-renders the code block."
   (when (and mark-graf-code-edit--source-buffer
              (buffer-live-p mark-graf-code-edit--source-buffer))
