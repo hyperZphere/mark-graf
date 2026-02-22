@@ -700,7 +700,7 @@ revealed lines (by parsing raw markdown syntax at point)."
 (defun mark-graf-edit-code-block ()
   "Edit code block at point in an indirect buffer with the correct major mode.
 Like org-mode's `org-edit-special': opens a narrowed indirect buffer
-with the language's major mode.  Press \\`C-c \\='\\` to finish or \\`C-c C-k\\` to abort."
+with the language's major mode."
   (interactive)
   (when (and (boundp 'mark-graf--code-edit-buffer)
              mark-graf--code-edit-buffer
