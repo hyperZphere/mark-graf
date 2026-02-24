@@ -98,7 +98,7 @@ Configure `mark-graf-edit-style` to control when raw markdown is revealed:
 | `M-RET` | `mark-graf-insert-list-item` | New list item |
 | `C-c <up/down>` | Move item | Reorder list items |
 | `C-c <left/right>` | Promote/demote | Change indentation |
-| `F8` | `mark-graf-toggle-checkbox` | Toggle task checkbox |
+| `C-c C-x C-b` | `mark-graf-toggle-checkbox` | Toggle task checkbox |
 
 ### Tables
 
@@ -232,14 +232,6 @@ All options available under `M-x customize-group RET mark-graf`:
 - Setext-style headings (underlines) are not supported
 - Math rendering requires external tools for SVG output
 - Some complex nested structures may not render perfectly
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
 
 ## License
 
