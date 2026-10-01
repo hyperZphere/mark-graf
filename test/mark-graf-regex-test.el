@@ -147,25 +147,49 @@ Test that PATTERN matches INPUT and captures EXPECTED groups."
 
 ;;; Code Block Pattern Tests
 
+;; In `mark-graf-ts--code-block-regex' group 1 is the fence itself and
+;; group 2 the info string, so the language is the *second* capture.
+
 (mg-regex-test code-block-with-language
   mark-graf-ts--code-block-regex
   "```python"
-  "python")
+  "```" "python")
 
 (mg-regex-test code-block-javascript
   mark-graf-ts--code-block-regex
   "```javascript"
-  "javascript")
+  "```" "javascript")
 
 (mg-regex-test code-block-no-language
-  "^```\\([a-zA-Z0-9]*\\)?$"
+  mark-graf-ts--code-block-regex
   "```"
-  "")
+  "```" "")
 
 (mg-regex-test code-block-tilde
-  "^~~~\\([a-zA-Z0-9]*\\)?$"
+  mark-graf-ts--code-block-regex
   "~~~ruby"
-  "ruby")
+  "~~~" "ruby")
+
+(mg-regex-test code-block-tilde-no-language
+  mark-graf-ts--code-block-regex
+  "~~~"
+  "~~~" "")
+
+(mg-regex-test code-block-punctuation-in-language
+  mark-graf-ts--code-block-regex
+  "```objective-c"
+  "```" "objective-c")
+
+;; The docstring promises CommonMark's "up to three spaces" rule.
+
+(mg-regex-test code-block-indented-three-spaces
+  mark-graf-ts--code-block-regex
+  "   ```python"
+  "```" "python")
+
+(mg-regex-no-match code-block-indented-four-spaces
+  mark-graf-ts--code-block-regex
+  "    ```python")
 
 ;;; List Pattern Tests
 
