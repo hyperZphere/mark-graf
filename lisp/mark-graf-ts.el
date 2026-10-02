@@ -422,6 +422,7 @@ Handles Windows CRLF line endings with \\r?.")
   (condition-case err
       (let ((elements '())
             (code-block-regions '())    ; Track code block regions to exclude
+            (code-span-regions '())     ; Track inline code spans to exclude
             (blockquote-regions '()))   ; Track blockquote regions to exclude
         (save-excursion
       ;; FIRST: Find all fenced code blocks to know what regions to skip
@@ -467,21 +468,41 @@ Handles Windows CRLF line endings with \\r?.")
           (push (cons quote-start (min quote-end end)) blockquote-regions)
           (goto-char (min quote-end end))))
 
-      ;; Helper to check if position is inside a code block or blockquote
+      ;; THIRD: Find inline code spans.  This has to run before the inline
+      ;; passes below, because markdown requires the contents of a code span
+      ;; to be taken literally: `a_b_c' is not emphasis, `[x](y)' is not a
+      ;; link.  Recording the spans up front lets those passes skip them.
+      (goto-char start)
+      (while (and (< (point) end)
+                  (re-search-forward mark-graf-ts--code-span-regex end t))
+        (let ((span-start (match-beginning 0))
+              (span-end (min (match-end 0) end)))
+          (unless (cl-some (lambda (region)
+                             (and (>= span-start (car region))
+                                  (<= span-start (cdr region))))
+                           (append code-block-regions blockquote-regions))
+            (push (cons span-start span-end) code-span-regions)
+            (push (make-mark-graf-node
+                   :type 'code-span
+                   :start span-start
+                   :end span-end)
+                  elements))))
+
+      ;; Helper to check if position is inside a code block or a code span
       (cl-flet ((in-code-block-p (pos)
                   (cl-some (lambda (region)
                             (and (>= pos (car region))
                                  (<= pos (cdr region))))
                           code-block-regions))
-                (in-special-block-p (pos)
-                  (or (cl-some (lambda (region)
-                                (and (>= pos (car region))
-                                     (<= pos (cdr region))))
-                              code-block-regions)
-                      (cl-some (lambda (region)
-                                (and (>= pos (car region))
-                                     (<= pos (cdr region))))
-                              blockquote-regions))))
+                (overlaps-code-span-p (mstart mend)
+                  ;; Testing only MSTART would miss a run that opens in
+                  ;; ordinary text and closes inside a span, as the `_' in
+                  ;; "x_y and `p_q`" does; that still has to be rejected,
+                  ;; because accepting it hides a delimiter inside the span.
+                  (cl-some (lambda (region)
+                             (and (< mstart (cdr region))
+                                  (> mend (car region))))
+                           code-span-regions)))
 
         ;; Find headings (not in code blocks)
         (goto-char start)
@@ -606,6 +627,7 @@ Handles Windows CRLF line endings with \\r?.")
           (let ((pos (match-beginning 0))
                 (mend (match-end 0)))
             (unless (or (in-code-block-p pos)
+                        (overlaps-code-span-p pos mend)
                         (and (> pos (point-min))
                              (eq (char-before pos) ?$))
                         (and (< mend (point-max))
@@ -620,38 +642,36 @@ Handles Windows CRLF line endings with \\r?.")
         (goto-char start)
         (while (and (< (point) end)
                     (re-search-forward mark-graf-ts--strong-regex end t))
-          (unless (in-code-block-p (match-beginning 1))
-            (push (make-mark-graf-node
-                   :type 'strong
-                   :start (match-beginning 1)
-                   :end (min (match-end 1) end))
-                  elements)))
+          (let ((mstart (match-beginning 1))
+                (mend (match-end 1)))
+            (unless (or (in-code-block-p mstart)
+                        (overlaps-code-span-p mstart mend))
+              (push (make-mark-graf-node
+                     :type 'strong
+                     :start mstart
+                     :end (min mend end))
+                    elements))))
 
         (goto-char start)
         (while (and (< (point) end)
                     (re-search-forward mark-graf-ts--emphasis-regex end t))
-          (unless (in-code-block-p (match-beginning 1))
-            (push (make-mark-graf-node
-                   :type 'emphasis
-                   :start (match-beginning 1)
-                   :end (min (match-end 1) end))
-                  elements)))
-
-        (goto-char start)
-        (while (and (< (point) end)
-                    (re-search-forward mark-graf-ts--code-span-regex end t))
-          (unless (in-special-block-p (match-beginning 0))
-            (push (make-mark-graf-node
-                   :type 'code-span
-                   :start (match-beginning 0)
-                   :end (min (match-end 0) end))
-                  elements)))
+          (let ((mstart (match-beginning 1))
+                (mend (match-end 1)))
+            (unless (or (in-code-block-p mstart)
+                        (overlaps-code-span-p mstart mend))
+              (push (make-mark-graf-node
+                     :type 'emphasis
+                     :start mstart
+                     :end (min mend end))
+                    elements))))
 
         ;; Find images (before links so links can skip image positions)
         (goto-char start)
         (while (and (< (point) end)
                     (re-search-forward mark-graf-ts--image-regex end t))
-          (unless (in-code-block-p (match-beginning 0))
+          (unless (or (in-code-block-p (match-beginning 0))
+                      (overlaps-code-span-p (match-beginning 0)
+                                            (match-end 0)))
             (push (make-mark-graf-node
                    :type 'image
                    :start (match-beginning 0)
@@ -664,6 +684,8 @@ Handles Windows CRLF line endings with \\r?.")
         (while (and (< (point) end)
                     (re-search-forward mark-graf-ts--link-regex end t))
           (unless (or (in-code-block-p (match-beginning 0))
+                      (overlaps-code-span-p (match-beginning 0)
+                                            (match-end 0))
                       ;; Skip if preceded by ! (that's an image, not a link)
                       (and (> (match-beginning 0) (point-min))
                            (eq (char-before (match-beginning 0)) ?!)))

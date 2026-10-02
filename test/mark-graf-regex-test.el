@@ -123,6 +123,77 @@ Test that PATTERN matches INPUT and captures EXPECTED groups."
   "`<div class=\"foo\">`"
   "<div class=\"foo\">")
 
+;;; Fallback Parser Tests - Code Spans Suppress Inline Markup
+
+;; Markdown requires the contents of an inline code span to be taken
+;; literally, so the fallback parser must not emit emphasis/strong/math/link
+;; elements for text between backticks.
+
+(defun mg-parse-types (text)
+  "Return the element types the fallback parser finds in TEXT."
+  (with-temp-buffer
+    (insert text)
+    (mapcar #'mark-graf-node-type
+            (mark-graf-ts--fallback-parse-region (point-min) (point-max)))))
+
+(ert-deftest parse/code-span-hides-underscore-emphasis ()
+  "Underscores inside a code span are literal, not emphasis."
+  (should (equal (mg-parse-types "`this_has_underscores`") '(code-span))))
+
+(ert-deftest parse/code-span-hides-asterisk-emphasis ()
+  "Asterisks inside a code span are literal, not emphasis."
+  (should (equal (mg-parse-types "`a*b*c`") '(code-span))))
+
+(ert-deftest parse/code-span-hides-strong ()
+  "Double underscores inside a code span are literal, not strong."
+  (should (equal (mg-parse-types "`__dunder__`") '(code-span))))
+
+(ert-deftest parse/code-span-hides-asterisk-strong ()
+  "Double asterisks inside a code span are literal, not strong."
+  (should (equal (mg-parse-types "`a**b**c`") '(code-span))))
+
+(ert-deftest parse/code-span-hides-link ()
+  "Link syntax inside a code span is literal, not a link."
+  (should (equal (mg-parse-types "`[x](y)`") '(code-span))))
+
+(ert-deftest parse/code-span-hides-inline-math ()
+  "Dollar signs inside a code span are literal, not math."
+  (should (equal (mg-parse-types "`$x$`") '(code-span))))
+
+(ert-deftest parse/code-span-hides-spaced-emphasis ()
+  "Emphasis with surrounding spaces is still literal inside a code span."
+  (should (equal (mg-parse-types "`a _b_ c`") '(code-span))))
+
+(ert-deftest parse/emphasis-outside-code-span-still-parsed ()
+  "Suppressing markup inside code spans must not disable it elsewhere."
+  (should (equal (mg-parse-types "*real italic*") '(emphasis)))
+  (should (equal (mg-parse-types "**real bold**") '(strong)))
+  (should (equal (mg-parse-types "a _b_ c") '(emphasis))))
+
+(ert-deftest parse/emphasis-adjacent-to-code-span ()
+  "A code span must not swallow emphasis that follows it on the same line."
+  (should (equal (mg-parse-types "`a_b_c` and _real_")
+                 '(code-span emphasis))))
+
+(ert-deftest parse/emphasis-may-not-reach-into-code-span ()
+  "A run that opens in ordinary text must not close inside a code span.
+The underscores in \"x_y and `p_q`\" pair up across the opening backtick;
+honouring that would hide a delimiter that is supposed to be literal."
+  (should (equal (mg-parse-types "x_y and `p_q` done") '(code-span))))
+
+(ert-deftest parse/asterisk-may-not-reach-into-code-span ()
+  "The same, for asterisks."
+  (should (equal (mg-parse-types "x*y and `p*q` done") '(code-span))))
+
+(ert-deftest parse/emphasis-may-not-reach-out-of-code-span ()
+  "A run that opens inside a code span must not close outside it."
+  (should (equal (mg-parse-types "`p_q` and x_y done") '(code-span))))
+
+(ert-deftest parse/emphasis-spanning-two-code-spans ()
+  "A run bridging two code spans is rejected, the spans themselves are not."
+  (should (equal (mg-parse-types "`a_b` mid `c_d`")
+                 '(code-span code-span))))
+
 ;;; Link Pattern Tests
 
 (mg-regex-test link-basic
