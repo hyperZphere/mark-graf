@@ -106,6 +106,67 @@ Test that PATTERN matches INPUT and captures EXPECTED groups."
   "_italic text_"
   "_italic text_" nil "italic text")
 
+;;; Intraword Underscore Tests
+
+;; Markdown allows intraword `*' emphasis (a*b*c) but not intraword `_'
+;; (plain_no_code_x is literal text, not plain<em>no</em>code_x).
+
+(mg-regex-no-match emphasis-intraword-underscore
+  mark-graf-ts--emphasis-regex
+  "plain_no_code_x")
+
+(mg-regex-no-match emphasis-underscore-closed-midword
+  mark-graf-ts--emphasis-regex
+  "_foo_bar")
+
+(mg-regex-no-match emphasis-underscore-opened-midword
+  mark-graf-ts--emphasis-regex
+  "foo_bar_")
+
+(mg-regex-no-match strong-intraword-underscore
+  mark-graf-ts--strong-regex
+  "plain__no__x")
+
+(mg-regex-test emphasis-intraword-asterisk-allowed
+  mark-graf-ts--emphasis-regex
+  "a*b*c"
+  "*b*" "b")
+
+(mg-regex-test emphasis-underscore-delimited-by-spaces
+  mark-graf-ts--emphasis-regex
+  "a _b_ c"
+  "_b_" nil "b")
+
+(ert-deftest regex/emphasis-adjacent-underscore-runs ()
+  "Consecutive underscore runs are both found.
+The `_' branch consumes a trailing boundary character, so the parser has
+to resume from (match-end 1) rather than the end of the whole match."
+  (with-temp-buffer
+    (insert "_a_ _b_")
+    (goto-char (point-min))
+    (let (found)
+      (while (and (< (point) (point-max))
+                  (re-search-forward mark-graf-ts--emphasis-regex nil t))
+        (push (match-string 1) found)
+        (goto-char (match-end 1)))
+      (should (equal (nreverse found) '("_a_" "_b_"))))))
+
+(ert-deftest parse/intraword-underscore-is-not-emphasis ()
+  "The fallback parser emits no emphasis for snake_case words."
+  (with-temp-buffer
+    (insert "plain_no_code_x")
+    (should (equal (mark-graf-ts--fallback-parse-region (point-min) (point-max))
+                   nil))))
+
+(ert-deftest parse/snake-case-beside-real-emphasis ()
+  "A snake_case word must not suppress real emphasis later on the line."
+  (with-temp-buffer
+    (insert "snake_case_name and _real_")
+    (should (equal (mapcar #'mark-graf-node-type
+                           (mark-graf-ts--fallback-parse-region
+                            (point-min) (point-max)))
+                   '(emphasis)))))
+
 ;;; Code Span Pattern Tests
 
 (mg-regex-test code-span-basic
