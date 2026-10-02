@@ -620,22 +620,26 @@ Handles Windows CRLF line endings with \\r?.")
         (goto-char start)
         (while (and (< (point) end)
                     (re-search-forward mark-graf-ts--strong-regex end t))
-          (unless (in-code-block-p (match-beginning 1))
-            (push (make-mark-graf-node
-                   :type 'strong
-                   :start (match-beginning 1)
-                   :end (min (match-end 1) end))
-                  elements)))
+          (let ((mstart (match-beginning 1))
+                (mend (match-end 1)))
+            (unless (in-code-block-p mstart)
+              (push (make-mark-graf-node
+                     :type 'strong
+                     :start mstart
+                     :end (min mend end))
+                    elements))))
 
         (goto-char start)
         (while (and (< (point) end)
                     (re-search-forward mark-graf-ts--emphasis-regex end t))
-          (unless (in-code-block-p (match-beginning 1))
-            (push (make-mark-graf-node
-                   :type 'emphasis
-                   :start (match-beginning 1)
-                   :end (min (match-end 1) end))
-                  elements)))
+          (let ((mstart (match-beginning 1))
+                (mend (match-end 1)))
+            (unless (in-code-block-p mstart)
+              (push (make-mark-graf-node
+                     :type 'emphasis
+                     :start mstart
+                     :end (min mend end))
+                    elements))))
 
         (goto-char start)
         (while (and (< (point) end)
